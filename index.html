@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>بطلنا نايف — لعبة النقاط</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>⭐</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Lalezar&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --font-display: 'Lalezar', 'Baloo Bhaijaan 2', sans-serif;
+    --font-body: 'Baloo Bhaijaan 2', 'Segoe UI', sans-serif;
+
+    --color-bg-top: #aee3ff;
+    --color-bg-bottom: #fff3d6;
+    --color-surface: #ffffff;
+    --color-surface-warm: #fff8ea;
+    --color-text: #33270f;
+    --color-text-muted: #8a7a5c;
+
+    --color-primary: #ff8a3d;
+    --color-primary-deep: #f06d17;
+    --color-success: #22a55b;
+    --color-success-deep: #15803f;
+    --color-success-soft: #e2f7ea;
+    --color-danger: #e5484d;
+    --color-danger-deep: #c22f35;
+    --color-danger-soft: #fde8e8;
+    --color-gold: #ffb938;
+
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --radius-full: 9999px;
+
+    --shadow-card: 0 10px 30px rgba(70, 45, 10, 0.14);
+    --shadow-pop: 0 6px 0 rgba(0, 0, 0, 0.12);
+    --transition-bounce: 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { -webkit-text-size-adjust: none; text-size-adjust: none; }
+
+  body {
+    min-height: 100dvh;
+    font-family: var(--font-body);
+    color: var(--color-text);
+    background: linear-gradient(180deg, var(--color-bg-top) 0%, var(--color-bg-bottom) 70%, #ffe9b8 100%);
+    overflow-x: hidden;
+    padding: var(--space-pad, 16px) 12px 40px;
+  }
+
+  img { display: block; max-width: 100%; height: auto; }
+  button { font: inherit; color: inherit; cursor: pointer; background: none; border: none; -webkit-tap-highlight-color: transparent; }
+  button:active { transform: scale(0.96); }
+
+  .wrap { max-width: 680px; margin-inline: auto; display: grid; gap: 16px; }
+
+  /* ---------- clouds decoration ---------- */
+  .clouds { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .cloud {
+    position: absolute; background: rgba(255,255,255,0.75); border-radius: var(--radius-full);
+    filter: blur(1px); animation: drift linear infinite;
+  }
+  .cloud::before, .cloud::after {
+    content: ''; position: absolute; background: inherit; border-radius: 50%;
+  }
+  .cloud.c1 { width: 130px; height: 38px; top: 7%; animation-duration: 70s; }
+  .cloud.c2 { width: 90px; height: 28px; top: 16%; animation-duration: 55s; animation-delay: -20s; }
+  .cloud.c3 { width: 160px; height: 44px; top: 3%; animation-duration: 90s; animation-delay: -45s; }
+  .cloud.c1::before { width: 55px; height: 55px; top: -26px; right: 18px; }
+  .cloud.c1::after { width: 38px; height: 38px; top: -16px; right: 62px; }
+  .cloud.c2::before { width: 40px; height: 40px; top: -20px; right: 12px; }
+  .cloud.c2::after { width: 28px; height: 28px; top: -12px; right: 44px; }
+  .cloud.c3::before { width: 66px; height: 66px; top: -32px; right: 24px; }
+  .cloud.c3::after { width: 46px; height: 46px; top: -20px; right: 76px; }
+  @keyframes drift { from { transform: translateX(110vw); } to { transform: translateX(-30vw); } }
+
+  .wrap > * { position: relative; z-index: 1; }
+
+  /* ---------- header ---------- */
+  header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
+  .title-block h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 6vw, 2.4rem);
+    line-height: 1.18;
+    color: #5b3a10;
+    text-shadow: 0 2px 0 rgba(255,255,255,0.6);
+  }
+  .title-block h1 span { color: var(--color-primary-deep); }
+  .level-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--color-gold); color: #5b3a10;
+    font-weight: 800; font-size: 0.95rem;
+    padding: 3px 14px; border-radius: var(--radius-full);
+    box-shadow: var(--shadow-pop); margin-top: 6px;
+  }
+  .icon-btn {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--color-surface); box-shadow: var(--shadow-card);
+    display: grid; place-items: center; font-size: 1.3rem;
+    transition: transform var(--transition-bounce), background 180ms;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { transform: scale(1.08); }
+  .icon-btn:active { transform: scale(0.92); }
+
+  /* ---------- hero card ---------- */
+  .hero-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 20px 20px 24px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 18px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    transition: background 400ms;
+  }
+  .hero-card.good { background: linear-gradient(135deg, #f4fcf6, var(--color-surface) 60%); }
+  .hero-card.bad { background: linear-gradient(135deg, #fff2f2, var(--color-surface) 60%); }
+
+  .hero-card::before {
+    content: ''; position: absolute; inset-inline: 0; top: 0; height: 10px;
+    background: repeating-linear-gradient(90deg,
+      var(--color-primary) 0 26px, var(--color-gold) 26px 52px,
+      var(--color-success) 52px 78px, #5aa9e6 78px 104px);
+  }
+
+  .avatar {
+    width: clamp(120px, 34vw, 190px);
+    position: relative;
+    animation: floaty 3.4s ease-in-out infinite;
+  }
+  .avatar-wrap { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: clamp(8px, 2vw, 16px); }
+  .friends-row {
+    display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap;
+  }
+  .friends-hint {
+    width: 100%; text-align: center; font-size: 0.78rem;
+    color: var(--color-text-muted); display: none;
+  }
+  .voice-input::placeholder { font-size: 0.82em; }
+  .friend-btn {
+    width: clamp(40px, 11vw, 60px);
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff8e1, #ffe9a8);
+    padding: 3px;
+    border: 2.5px solid var(--color-gold);
+    box-shadow: var(--shadow-card);
+    animation: floaty 2.8s ease-in-out infinite;
+  }
+  .friend-btn.glad { border-color: #43a047; }
+  .friend-btn.mad { border-color: #e53935; }
+  .friend-btn.react { animation: charpop 600ms cubic-bezier(0.34, 1.8, 0.64, 1); }
+  .friend-btn:nth-child(2) { animation-delay: -0.7s; }
+  .friend-btn:nth-child(3) { animation-delay: -1.4s; }
+  .friend-btn:nth-child(4) { animation-delay: -2.1s; }
+  .friend-btn:active { transform: scale(0.9); }
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+  .score-side { display: grid; gap: 8px; justify-items: start; }
+  .score-label { font-weight: 700; color: var(--color-text-muted); font-size: 1.05rem; }
+  .score-num {
+    font-family: var(--font-display);
+    font-size: clamp(3.2rem, 14vw, 5rem);
+    line-height: 1;
+    color: var(--color-primary-deep);
+    font-variant-numeric: tabular-nums lining-nums;
+    text-shadow: 0 3px 0 rgba(255,255,255,0.55);
+    position: relative;
+    transition: transform var(--transition-bounce), color 200ms;
+  }
+  .score-num.pop { animation: pop 450ms cubic-bezier(0.34, 1.8, 0.64, 1); }
+  .score-num.bad-color { color: var(--color-danger-deep); }
+  @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.35) rotate(-4deg); } 100% { transform: scale(1); } }
+
+  .fly-chip {
+    position: absolute; top: 50%; inset-inline-start: 100%;
+    font-family: var(--font-display); font-size: 1.7rem;
+    animation: flyup 1s ease-out forwards; pointer-events: none;
+  }
+  @keyframes flyup { 0% { opacity: 0; transform: translateY(6px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateY(-46px); } }
+
+  .progress-wrap { width: 100%; }
+  .progress-text { font-size: 0.9rem; font-weight: 700; color: var(--color-text-muted); margin-bottom: 4px; }
+  .progress-bar {
+    width: 100%; height: 16px; border-radius: var(--radius-full);
+    background: #f1e6cf; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
+  }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--color-gold), var(--color-primary));
+    border-radius: var(--radius-full);
+    transition: width 500ms cubic-bezier(0.34, 1.3, 0.64, 1);
+  }
+
+  .stars { display: flex; gap: 4px; font-size: 1.15rem; }
+  .stars span { filter: grayscale(1); opacity: 0.35; transition: filter 300ms, opacity 300ms; }
+  .stars span.lit { filter: none; opacity: 1; animation: pop 450ms cubic-bezier(0.34, 1.8, 0.64, 1); }
+
+  /* ---------- action buttons ---------- */
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .action-btn {
+    border-radius: var(--radius-md);
+    padding: 18px 10px 15px;
+    display: grid; gap: 2px; justify-items: center;
+    font-weight: 800; font-size: 1.15rem;
+    color: #fff;
+    box-shadow: var(--shadow-pop);
+    transition: transform var(--transition-bounce), box-shadow 180ms;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.18);
+  }
+  .action-btn .sign {
+    font-family: var(--font-display); font-size: 2.2rem; line-height: 1;
+    width: 54px; height: 54px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: rgba(255,255,255,0.28);
+    text-shadow: none;
+  }
+  .action-btn.plus { background: linear-gradient(180deg, #2ec26e, var(--color-success-deep)); }
+  .action-btn.minus { background: linear-gradient(180deg, #f4696e, var(--color-danger-deep)); }
+  .action-btn:hover { transform: translateY(-3px); box-shadow: 0 9px 0 rgba(0,0,0,0.12); }
+  .action-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.12); }
+
+  /* ---------- voice chat panel ---------- */
+  .voice-panel {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 16px;
+    display: none;
+    grid-template-columns: auto 1fr;
+    gap: 6px 14px;
+    align-items: center;
+    border: 3px solid var(--color-gold);
+  }
+  .voice-panel.open { display: grid; }
+  .voice-char {
+    width: 74px; height: 74px; border-radius: 50%;
+    background: var(--color-surface-warm);
+    display: grid; place-items: center;
+    border: 3px solid var(--color-primary);
+    flex-shrink: 0;
+  }
+  .voice-char img { width: 54px; }
+  .voice-side { display: grid; gap: 8px; min-width: 0; }
+  .voice-status { font-weight: 800; font-size: 0.95rem; color: #6b5a3c; min-height: 22px; }
+  .voice-controls { display: flex; gap: 8px; align-items: center; min-width: 0; }
+  .mic-btn {
+    width: 58px; height: 58px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(180deg, #2ec26e, var(--color-success-deep));
+    color: #fff; font-size: 1.5rem;
+    box-shadow: var(--shadow-pop);
+    display: grid; place-items: center;
+    transition: transform var(--transition-bounce);
+  }
+  .mic-btn:hover { transform: scale(1.08); }
+  .mic-btn.listening {
+    background: linear-gradient(180deg, #f4696e, var(--color-danger-deep));
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(229,72,77,0.5); } 50% { transform: scale(1.1); box-shadow: 0 0 0 14px rgba(229,72,77,0); } }
+  .voice-input {
+    flex: 1; min-width: 0;
+    border: 2.5px solid #e8dcc4; border-radius: 14px;
+    background: var(--color-surface-warm);
+    padding: 10px 12px; font: inherit; font-weight: 600;
+  }
+  .voice-input:focus { outline: none; border-color: var(--color-primary); }
+  .voice-send {
+    background: var(--color-primary); color: #fff; border-radius: 14px;
+    padding: 10px 16px; font-weight: 800; box-shadow: var(--shadow-pop);
+  }
+  .voice-reply {
+    grid-column: 1 / -1;
+    background: var(--color-surface-warm);
+    border: 2.5px solid var(--color-gold);
+    border-radius: 16px; padding: 12px 14px;
+    font-weight: 700; line-height: 1.55;
+    display: none;
+  }
+  .voice-reply.show { display: block; }
+  .voice-hint { grid-column: 1 / -1; font-size: 0.8rem; color: var(--color-text-muted); text-align: center; }
+  .char-card.selected { outline: 4px solid var(--color-primary); outline-offset: 2px; cursor: pointer; }
+  .char-card { cursor: pointer; }
+
+  /* ---------- characters ---------- */
+  .chars-title {
+    font-family: var(--font-display); font-size: 1.35rem; color: #5b3a10;
+    text-align: center; text-shadow: 0 2px 0 rgba(255,255,255,0.5); margin-top: 4px;
+  }
+  .characters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 70px; }
+  .char-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    padding: 10px 6px 8px;
+    display: grid; justify-items: center; gap: 6px;
+    position: relative;
+    transition: transform var(--transition-bounce), background 300ms;
+    overflow: visible;
+  }
+  .char-card.react { animation: charpop 600ms cubic-bezier(0.34, 1.8, 0.64, 1); }
+  @keyframes charpop { 0% { transform: scale(1); } 35% { transform: scale(1.14) rotate(3deg); } 100% { transform: scale(1); } }
+  .char-card.mad { background: var(--color-danger-soft); }
+  .char-card.glad { background: var(--color-success-soft); }
+  .char-img { width: clamp(58px, 16vw, 108px); transition: filter 300ms; }
+  .char-card.mad .char-img { animation: tremble 0.35s ease-in-out 2; }
+  @keyframes tremble { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  .char-name { font-weight: 800; font-size: 0.92rem; color: #5b3a10; text-align: center; line-height: 1.2; }
+  .char-bubble {
+    position: absolute; bottom: calc(100% + 8px); inset-inline: -14px;
+    background: var(--color-surface-warm);
+    border: 2.5px solid var(--color-gold);
+    border-radius: 14px;
+    padding: 7px 9px;
+    font-size: 0.85rem; font-weight: 700; line-height: 1.35;
+    text-align: center;
+    box-shadow: var(--shadow-card);
+    opacity: 0; transform: translateY(8px) scale(0.85);
+    pointer-events: none;
+    transition: opacity 250ms, transform 250ms cubic-bezier(0.34, 1.6, 0.64, 1);
+    z-index: 5;
+  }
+  .char-bubble.show { opacity: 1; transform: translateY(0) scale(1); }
+  .char-bubble::after {
+    content: ''; position: absolute; top: 100%; inset-inline-start: calc(50% - 7px);
+    border: 7px solid transparent; border-top-color: var(--color-gold);
+  }
+
+  /* ---------- message banner ---------- */
+  .banner {
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    font-weight: 800; font-size: 1.05rem;
+    text-align: center;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+    transition: background 300ms, color 300ms;
+    min-height: 50px;
+    display: grid; place-items: center;
+  }
+  .banner.good { background: var(--color-success-soft); color: var(--color-success-deep); }
+  .banner.bad { background: var(--color-danger-soft); color: var(--color-danger-deep); }
+
+  .footer-note { text-align: center; font-size: 0.82rem; color: #9c8a68; font-weight: 600; }
+
+  /* ---------- confetti + effects ---------- */
+  #fx { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+  .shake { animation: shake 0.5s ease-in-out; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-9px); } 40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); } 80% { transform: translateX(4px); }
+  }
+  .flash-good { position: fixed; inset: 0; pointer-events: none; z-index: 40; background: radial-gradient(circle, rgba(46,194,110,0.28), transparent 65%); animation: fadeout 0.7s forwards; }
+  .flash-bad { position: fixed; inset: 0; pointer-events: none; z-index: 40; background: radial-gradient(circle, rgba(229,72,77,0.22), transparent 65%); animation: fadeout 0.7s forwards; }
+  @keyframes fadeout { to { opacity: 0; } }
+
+  /* ---------- friend chooser modal ---------- */
+  .chooser-modal { max-width: 400px; }
+  .chooser-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 14px 0 4px; }
+  .chooser-char {
+    background: var(--color-surface-warm);
+    border: 3px solid var(--color-gold);
+    border-radius: var(--radius-md);
+    padding: 12px 8px 8px;
+    display: grid; justify-items: center;
+    transition: transform var(--transition-bounce), border-color 180ms, background 180ms;
+  }
+  .chooser-char:hover { transform: scale(1.06); border-color: var(--color-primary); background: var(--color-success-soft); }
+  .chooser-char img { width: clamp(64px, 20vw, 90px); }
+  .chooser-char .pick-heart { font-size: 1.3rem; margin-top: 2px; }
+
+  /* ---------- modal ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(40,26,8,0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: grid; place-items: center; z-index: 100; padding: 20px;
+    opacity: 0; pointer-events: none; transition: opacity 200ms;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+  .modal {
+    background: var(--color-surface); border-radius: var(--radius-lg);
+    padding: 28px 24px; max-width: 340px; width: 100%;
+    text-align: center; box-shadow: var(--shadow-card);
+    transform: scale(0.85); transition: transform 250ms cubic-bezier(0.34, 1.6, 0.64, 1);
+  }
+  .modal-overlay.open .modal { transform: scale(1); }
+  .modal h2 { font-family: var(--font-display); font-size: 1.5rem; color: #5b3a10; margin-bottom: 6px; }
+  .modal p { color: var(--color-text-muted); font-weight: 600; margin-bottom: 18px; }
+  .modal .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal .btn {
+    padding: 11px; border-radius: 14px; font-weight: 800; color: #fff;
+    box-shadow: var(--shadow-pop);
+  }
+  .btn.danger { background: linear-gradient(180deg, #f4696e, var(--color-danger-deep)); }
+  .btn.ghost { background: #efe6d2; color: #6b5a3c; }
+
+  /* ---------- toast for milestone ---------- */
+  .milestone-toast {
+    position: fixed; bottom: 16px; left: 50%; transform: translate(-50%, 200%);
+    background: linear-gradient(180deg, #ffd35c, var(--color-gold));
+    color: #5b3a10; font-family: var(--font-display);
+    font-size: 1.2rem; padding: 10px 26px; border-radius: var(--radius-full);
+    box-shadow: 0 10px 30px rgba(70,45,10,0.3); z-index: 90;
+    transition: transform 500ms cubic-bezier(0.34, 1.6, 0.64, 1);
+    max-width: calc(100vw - 28px); text-align: center;
+  }
+  .milestone-toast.show { transform: translate(-50%, 0); }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 560px) {
+    .characters { grid-template-columns: repeat(4, 1fr); margin-top: 64px; gap: 6px; }
+    .char-card { padding: 10px 4px 6px; border-radius: 14px; }
+    .char-bubble { inset-inline: 2px; font-size: 0.72rem; padding: 5px 6px; border-radius: 11px; }
+    .char-img { width: clamp(48px, 14vw, 64px); }
+    .char-name { font-size: 0.72rem; }
+    .icon-btn { width: 42px; height: 42px; font-size: 1.15rem; }
+    .title-block h1 { line-height: 1.2; font-size: clamp(1.35rem, 5.5vw, 1.8rem); }
+    .hero-card { grid-template-columns: 1fr; justify-items: center; text-align: center; padding: 14px 14px 16px; gap: 4px; }
+    .avatar { width: clamp(92px, 26vw, 118px); }
+    .score-side { justify-items: center; width: 100%; gap: 5px; }
+    .score-num { font-size: clamp(2.6rem, 12vw, 3.4rem); }
+    .banner { font-size: 0.9rem; padding: 9px 12px; min-height: 44px; }
+    .action-btn { padding: 14px 8px 12px; font-size: 1rem; }
+    .action-btn .sign { width: 50px; height: 50px; font-size: 2.1rem; }
+    .actions { gap: 10px; }
+    .wrap { gap: 10px; }
+    .chars-title { font-size: 1.15rem; margin-top: 0; }
+    .stars { font-size: 0.95rem; gap: 3px; }
+    .progress-bar { height: 13px; }
+  }
+  /* ---------- tablets (iPad) ---------- */
+  @media (min-width: 768px) {
+    body { --space-pad: 28px; }
+    .wrap { max-width: 780px; gap: 22px; }
+    .hero-card { padding: 30px 30px 34px; }
+    .avatar { width: 150px; }
+    .friend-btn { width: 52px; }
+    .action-btn { padding: 26px 10px 22px; font-size: 1.35rem; }
+    .action-btn .sign { width: 70px; height: 70px; font-size: 2.9rem; }
+    .char-card { padding: 16px 8px 12px; }
+    .char-name { font-size: 1.05rem; }
+    .chars-title { font-size: 1.6rem; }
+    .banner { font-size: 1.2rem; }
+    .score-num { font-size: clamp(4rem, 10vw, 6rem); }
+    .icon-btn { width: 54px; height: 54px; font-size: 1.5rem; }
+    .progress-bar { height: 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="clouds" aria-hidden="true">
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <div class="cloud c3"></div>
+</div>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="milestone-toast" id="milestoneToast" role="status"></div>
+
+<div class="wrap">
+
+  <header>
+    <div class="title-block">
+      <h1>بطلنا <span>نايف</span></h1>
+      <div class="level-badge">🏅 <span id="levelName">مستكشف</span></div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="icon-btn" id="undoBtn" title="تراجع عن آخر حركة" aria-label="تراجع عن آخر حركة">↩️</button>
+      <button class="icon-btn" id="soundBtn" title="الصوت" aria-label="تشغيل أو إسكات الصوت">🔊</button>
+      <button class="icon-btn" id="resetBtn" title="تصفير النقاط" aria-label="تصفير النقاط">🔄</button>
+    </div>
+  </header>
+
+  <section class="hero-card" id="heroCard" aria-label="لوحة نايف">
+    <div class="avatar-wrap">
+      <img class="avatar" id="avatarImg" src="assets/nayef-happy.png" alt="نايف" />
+      <div class="friends-row" id="friendsRow" aria-label="أصدقاء نايف"></div>
+      <div class="friends-hint" id="friendsHint">👆 اضغط على صديق نايف تتكلم معه</div>
+    </div>
+    <div class="score-side">
+      <div class="score-label">نقاط نايف</div>
+      <div class="score-num" id="scoreNum">0</div>
+      <div class="stars" id="stars" aria-label="الإنجازات"></div>
+      <div class="progress-wrap">
+        <div class="progress-text" id="progressText"></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button class="action-btn plus" id="plusBtn">
+      <span class="sign">+</span>
+      عمل حلو! نقطة
+    </button>
+    <button class="action-btn minus" id="minusBtn">
+      <span class="sign">−</span>
+      عمل مو زين! خسارة
+    </button>
+  </div>
+
+  <div class="banner" id="banner">اضغط الزر الأخضر كل ما نايف سوى شي حلو 👊</div>
+
+  <section class="voice-panel" id="voicePanel" aria-label="التحدث مع الشخصية">
+    <div class="voice-char" id="voiceChar"><img id="voiceCharImg" src="assets/ninja-happy.png" alt="" /></div>
+    <div class="voice-side">
+      <div class="voice-status" id="voiceStatus">اضغط الميكروفون واتكلم عن نايف 🎤</div>
+      <div class="voice-controls">
+        <button class="mic-btn" id="micBtn" aria-label="تحدث">🎤</button>
+        <input class="voice-input" id="voiceInput" type="text" placeholder="اكتب عن نايف…" />
+        <button class="voice-send" id="voiceSend">إرسال</button>
+      </div>
+    </div>
+    <div class="voice-reply" id="voiceReply"></div>
+    <div class="voice-hint">تقدر تكلم الشخصية بصوتك أو تكتب — وهي ترد عليك بصوتها 🗣️</div>
+  </section>
+
+  <div class="chars-title" id="charsTitle">فريق التشجيع — اضغط على أي شخصية والتحدث معها</div>
+  <section class="characters" id="characters" aria-label="شخصيات التشجيع"></section>
+
+  <div class="footer-note">💛 لعبة عائلية لتحفيز نايف — استخدموها في البيت</div>
+</div>
+
+<!-- reset confirm modal -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal">
+    <h2>تصفير النقاط؟</h2>
+    <p>بتنصفر كل نقاط نايف وتبدأ من جديد. متأكد؟</p>
+    <div class="row">
+      <button class="btn ghost" id="cancelReset">لا، رجوع</button>
+      <button class="btn danger" id="confirmReset">نعم، صفّرها</button>
+    </div>
+  </div>
+</div>
+
+<!-- friend chooser modal -->
+<div class="modal-overlay" id="friendModal">
+  <div class="modal chooser-modal">
+    <h2 id="friendTitle">🎉 ترقية جديدة!</h2>
+    <p>اختر صديقًا جديدًا يوقف جنب نايف فوق!</p>
+    <div class="chooser-grid" id="chooserGrid"></div>
+  </div>
+</div>
+
+<script>window.__API_BASE__ = 'port/8787';</script>
+<script>
+(function () {
+  'use strict';
+
+  /* ================= data ================= */
+
+  var CHARACTERS = [
+    { id: 'ninja',  name: 'كين النينجا',    img: 'assets/ninja-happy.png',  imgSad: 'assets/ninja-angry.png' },
+    { id: 'fox',    name: 'فلاش الثعلب',   img: 'assets/fox-happy.png',     imgSad: 'assets/fox-angry.png' },
+    { id: 'bunny',  name: 'شرارة الأرنب',  img: 'assets/bunny-happy.png',   imgSad: 'assets/bunny-angry.png' },
+    { id: 'pirate', name: 'لؤي القرصان',  img: 'assets/pirate-happy.png',   imgSad: 'assets/pirate-angry.png' }
+  ];
+
+  var PRAISE = [
+    'ممتاز يا نايف! بطل حقيقي',
+    'وااااو! ما شاء الله عليك',
+    'استمر يا نايف، أنت أسطورة',
+    'رائع! نقطة وتستاهل',
+    'أنا فخور فيك يا نايف!',
+    'تصرف بطولي! كمّل كذا',
+    'هذا هو البطل اللي نعرفه',
+    'شغل نينجا والله!'
+  ];
+
+  var SCOLD = [
+    'هذا التصرف ما عجبني.. صحّحه وكسب نقطة',
+    'عاايف يا نايف! وين البطل؟',
+    'الغلط فرصة تتعلم.. تصرف أحسن',
+    'خذ نفس.. وعدنا خير من ألف نقطة',
+    'ما عجبني هذا الشي.. أصلح وضعك!',
+    'البطل الحقيقي يصلح غلطه بسرعة'
+  ];
+
+  var LEVELS = [
+    { min: 0,  name: 'مستكشف' },
+    { min: 10, name: 'مقاتل صغير' },
+    { min: 20, name: 'نينجا صاعد' },
+    { min: 35, name: 'بطل' },
+    { min: 50, name: 'قائد الفريق' },
+    { min: 75, name: 'أسطورة' }
+  ];
+
+  var STAR_STEP = 10; // star every 10 points
+
+  /* ================= state ================= */
+
+  var score = 0;
+  var history = []; // {delta}
+  var soundOn = true;
+  var friends = []; // chosen character ids
+  var maxLevelIdx = 0; // highest LEVELS index reached (friend choices gate)
+
+  // persist in URL hash (sandboxed preview has no storage APIs)
+  function save() {
+    try {
+      var h = '#s=' + score;
+      if (friends.length) h += '&f=' + friends.join('-');
+      if (maxLevelIdx > friends.length) h += '&L=' + maxLevelIdx;
+      location.replace(h);
+    } catch (e) { /* noop */ }
+  }
+  function load() {
+    var m = /#s=(\d+)(?:&f=([\w-]+))?(?:&L=(\d+))?/.exec(location.hash || '');
+    if (m) {
+      score = Math.max(0, parseInt(m[1], 10) || 0);
+      if (m[2]) friends = m[2].split('-').filter(function (id) { return CHARACTERS.some(function (c) { return c.id === id; }); });
+      maxLevelIdx = Math.max(friends.length, parseInt(m[3] || '0', 10) || 0, levelIdxFor(score));
+    }
+  }
+  load();
+
+  /* ================= elements ================= */
+
+  var $ = function (id) { return document.getElementById(id); };
+  var scoreNum = $('scoreNum');
+  var heroCard = $('heroCard');
+  var avatarImg = $('avatarImg');
+  var banner = $('banner');
+  var starsEl = $('stars');
+  var progressFill = $('progressFill');
+  var progressText = $('progressText');
+  var levelName = $('levelName');
+  var charactersEl = $('characters');
+  var toast = $('milestoneToast');
+
+  /* build star slots (up to 10) */
+  for (var s = 0; s < 10; s++) starsEl.appendChild(document.createElement('span'));
+  var starSpans = starsEl.children;
+  function starSlot(i) { return starSpans[Math.min(i, starSpans.length - 1)]; }
+
+  /* build character cards */
+  var charCards = CHARACTERS.map(function (c) {
+    var card = document.createElement('div');
+    card.className = 'char-card';
+    var bubble = document.createElement('div');
+    bubble.className = 'char-bubble';
+    var img = document.createElement('img');
+    img.className = 'char-img';
+    img.src = c.img;
+    img.alt = c.name;
+    card.appendChild(bubble);
+    card.appendChild(img);
+    charactersEl.appendChild(card);
+    return { card: card, bubble: bubble, img: img, data: c, bubbleTimer: null };
+  });
+
+  /* ================= voice chat ================= */
+
+  var rawApiBase = window.__API_BASE__ || '';
+  var unresolved = rawApiBase.indexOf('__PORT_') === 0;
+  var API_BASE = unresolved ? 'http://127.0.0.1:8787' : rawApiBase;
+
+  var selectedChar = null;
+  var voicePanel = $('voicePanel');
+  var voiceStatus = $('voiceStatus');
+  var voiceReply = $('voiceReply');
+  var voiceCharImg = $('voiceCharImg');
+  var micBtn = $('micBtn');
+  var voiceInput = $('voiceInput');
+
+  var VOICE_STYLE = {
+    ninja: { rate: 1.05, pitch: 1.1 },
+    fox: { rate: 1.25, pitch: 1.35 },
+    bunny: { rate: 1.0, pitch: 1.6 },
+    pirate: { rate: 0.95, pitch: 0.8 }
+  };
+
+  function speak(text, charId) {
+    try {
+      if (!('speechSynthesis' in window) || !soundOn) return;
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ar-SA';
+      var style = VOICE_STYLE[charId] || { rate: 1, pitch: 1 };
+      u.rate = style.rate;
+      u.pitch = style.pitch;
+      var voices = window.speechSynthesis.getVoices() || [];
+      var ar = voices.filter(function (v) { return /^ar/i.test(v.lang); });
+      if (ar.length) u.voice = ar[0];
+      window.speechSynthesis.speak(u);
+    } catch (e) { /* TTS unavailable */ }
+  }
+  // warm up voice list on iOS
+  if ('speechSynthesis' in window) { try { window.speechSynthesis.getVoices(); } catch (e) {} }
+
+  function selectCharacter(idx) {
+    selectedChar = CHARACTERS[idx];
+    charCards.forEach(function (c, i) { c.card.classList.toggle('selected', i === idx); });
+    voiceCharImg.src = selectedChar.img;
+    voicePanel.classList.add('open');
+    voiceReply.classList.remove('show');
+    voiceStatus.textContent = 'اضغط الميكروفون واتكلم عن نايف 🎤';
+    // vertical-only smooth scroll (RTL-safe)
+    var r = voicePanel.getBoundingClientRect();
+    var y = r.top + window.scrollY - (window.innerHeight - r.height) / 2;
+    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+  }
+
+  function sendToCharacter(text) {
+    if (!text || !selectedChar) return;
+    ensureAudio();
+    voiceStatus.textContent = 'يفكر... 🤔';
+    voiceReply.classList.remove('show');
+    fetch(API_BASE + '/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ character: selectedChar.id, text: text })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var reply = (data && data.reply) || 'ما سمعتك زين.. قولها مرة ثانية';
+        voiceStatus.textContent = 'اضغط الميكروفون واتكلم عن نايف 🎤';
+        voiceReply.textContent = reply;
+        voiceReply.classList.add('show');
+        speak(reply, selectedChar.id);
+      })
+      .catch(function () {
+        voiceStatus.textContent = 'صار خلل بالاتصال.. جرب مرة ثانية';
+      });
+  }
+
+  /* mic via SpeechRecognition */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null;
+  if (SR) {
+    rec = new SR();
+    rec.lang = 'ar-SA';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = function (e) {
+      var t = e.results[0][0].transcript;
+      if (t) sendToCharacter(t);
+    };
+    rec.onerror = function (e) {
+      micBtn.classList.remove('listening');
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        voiceStatus.textContent = 'الميكروفون ممنوع هنا — استخدم الكتابة بدل الصوت ✍️';
+        voiceInput.focus();
+      } else if (e.error === 'no-speech') {
+        voiceStatus.textContent = 'ما سمعت شي.. حاول مرة ثانية 🎤';
+      }
+    };
+    rec.onend = function () { micBtn.classList.remove('listening'); };
+  }
+  micBtn.addEventListener('click', function () {
+    if (!selectedChar) return;
+    if (!rec) {
+      voiceStatus.textContent = 'متصفحك ما يدعم الصوت — اكتب بدل الكلام ✍️';
+      voiceInput.focus();
+      return;
+    }
+    if (rec.state === 'listening') return;
+    try {
+      window.speechSynthesis && window.speechSynthesis.cancel();
+      rec.start();
+      micBtn.classList.add('listening');
+      voiceStatus.textContent = 'أسمعك... اتكلم عن نايف 🎧';
+    } catch (e) {
+      micBtn.classList.remove('listening');
+    }
+  });
+
+  voiceInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { sendToCharacter(voiceInput.value); voiceInput.value = ''; }
+  });
+  $('voiceSend').addEventListener('click', function () {
+    sendToCharacter(voiceInput.value);
+    voiceInput.value = '';
+  });
+
+  /* tap a character card to start a chat */
+  charCards.forEach(function (c, i) {
+    c.card.addEventListener('click', function () { selectCharacter(i); });
+  });
+
+  /* ================= audio ================= */
+
+  var audioCtx = null;
+  var audioReady = null;
+  function ensureAudio() {
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    if (!audioCtx) return Promise.resolve();
+    if (audioCtx.state === 'running') return Promise.resolve();
+    if (!audioReady) audioReady = audioCtx.resume().then(function () { audioReady = null; });
+    return audioReady;
+  }
+  function tone(freq, start, dur, type, vol) {
+    if (!audioCtx || !soundOn) return;
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = type || 'triangle';
+    osc.frequency.value = freq;
+    var t0 = audioCtx.currentTime + start;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(vol || 0.25, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.05);
+  }
+  function sfxPlus() {
+    ensureAudio().then(function () {
+      // cheerful major arpeggio C5 E5 G5 C6
+      [523, 659, 784, 1047].forEach(function (f, i) { tone(f, i * 0.07, 0.22, 'triangle', 0.22); });
+      applause();
+    });
+  }
+  function sfxMinus() {
+    ensureAudio().then(function () {
+      // sad descending G4 E4 C4
+      [392, 330, 262].forEach(function (f, i) { tone(f, i * 0.13, 0.3, 'sine', 0.2); });
+      grumble();
+    });
+  }
+  function sfxMilestone() {
+    ensureAudio().then(function () {
+      [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone(f, i * 0.09, 0.25, 'square', 0.12); });
+      applause(14);
+    });
+  }
+
+  /* ---- synthesized crowd applause: filtered noise bursts ---- */
+  function applause(count) {
+    if (!audioCtx || !soundOn) return;
+    var n = count || 8;
+    var t = audioCtx.currentTime + 0.02;
+    var gap = 0.17;
+    for (var i = 0; i < n; i++) {
+      clapBurst(t, 0.55 + Math.random() * 0.3);
+      t += gap;
+      gap = Math.max(0.085, gap - 0.012);
+    }
+  }
+  function clapBurst(t0, vol) {
+    var dur = 0.11;
+    var sr = audioCtx.sampleRate;
+    var buf = audioCtx.createBuffer(1, Math.floor(sr * dur), sr);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.2);
+    var src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    var bp = audioCtx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 950 + Math.random() * 700;
+    bp.Q.value = 0.8;
+    var g = audioCtx.createGain();
+    g.gain.setValueAtTime(vol * 0.9, t0);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    src.connect(bp); bp.connect(g); g.connect(audioCtx.destination);
+    src.start(t0);
+  }
+
+  /* ---- synthesized crowd grumble/boo: low murmur + descending wah ---- */
+  function grumble() {
+    if (!audioCtx || !soundOn) return;
+    var t0 = audioCtx.currentTime + 0.02;
+    // low crowd murmur: filtered noise swell
+    var dur = 1.0;
+    var sr = audioCtx.sampleRate;
+    var buf = audioCtx.createBuffer(1, Math.floor(sr * dur), sr);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    var src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    var lp = audioCtx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 380;
+    var g = audioCtx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.32, t0 + 0.15);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    src.connect(lp); lp.connect(g); g.connect(audioCtx.destination);
+    src.start(t0);
+    // disappointed descending "wah-wah" x2 (sawtooth with vibrato)
+    for (var k = 0; k < 2; k++) {
+      var osc = audioCtx.createOscillator();
+      var vg = audioCtx.createGain();
+      var vib = audioCtx.createOscillator();
+      var vibGain = audioCtx.createGain();
+      var st = t0 + 0.05 + k * 0.42;
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(210, st);
+      osc.frequency.exponentialRampToValueAtTime(140, st + 0.34);
+      vib.frequency.value = 6.5;
+      vibGain.gain.value = 12;
+      vib.connect(vibGain); vibGain.connect(osc.frequency);
+      vg.gain.setValueAtTime(0.16, st);
+      vg.gain.exponentialRampToValueAtTime(0.001, st + 0.36);
+      var lp2 = audioCtx.createBiquadFilter();
+      lp2.type = 'lowpass'; lp2.frequency.value = 900;
+      osc.connect(lp2); lp2.connect(vg); vg.connect(audioCtx.destination);
+      osc.start(st); osc.stop(st + 0.4);
+      vib.start(st); vib.stop(st + 0.4);
+    }
+  }
+
+  /* ================= confetti ================= */
+
+  var fx = $('fx');
+  var fctx = fx.getContext('2d');
+  var particles = [];
+  function sizeCanvas() {
+    fx.width = window.innerWidth;
+    fx.height = window.innerHeight;
+  }
+  sizeCanvas();
+  window.addEventListener('resize', sizeCanvas);
+
+  var CONFETTI_COLORS = ['#ffb938', '#ff8a3d', '#2ec26e', '#5aa9e6', '#e5484d', '#b476f0'];
+  function burstConfetti(n) {
+    for (var i = 0; i < (n || 90); i++) {
+      particles.push({
+        x: Math.random() * fx.width,
+        y: -20 - Math.random() * fx.height * 0.3,
+        w: 7 + Math.random() * 7,
+        h: 7 + Math.random() * 7,
+        c: CONFETTI_COLORS[(Math.random() * CONFETTI_COLORS.length) | 0],
+        vy: 2.2 + Math.random() * 2.6,
+        vx: -1.6 + Math.random() * 3.2,
+        rot: Math.random() * Math.PI,
+        vr: -0.12 + Math.random() * 0.24,
+        life: 240 + Math.random() * 80
+      });
+    }
+  }
+  function rainDrops(n) {
+    for (var i = 0; i < (n || 45); i++) {
+      particles.push({
+        x: Math.random() * fx.width,
+        y: -20 - Math.random() * 120,
+        w: 4, h: 13 + Math.random() * 9,
+        c: 'rgba(90,140,200,0.75)',
+        vy: 5 + Math.random() * 3.5,
+        vx: 0,
+        rot: 0, vr: 0,
+        life: 130
+      });
+    }
+  }
+  function tickFx() {
+    fctx.clearRect(0, 0, fx.width, fx.height);
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life--;
+      if (p.y > fx.height + 24 || p.life <= 0) { particles.splice(i, 1); continue; }
+      fctx.save();
+      fctx.translate(p.x, p.y);
+      fctx.rotate(p.rot);
+      fctx.fillStyle = p.c;
+      fctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      fctx.restore();
+    }
+    requestAnimationFrame(tickFx);
+  }
+  requestAnimationFrame(tickFx);
+
+  /* ================= friends system ================= */
+
+  var friendsRow = $('friendsRow');
+  var friendModal = $('friendModal');
+  var chooserGrid = $('chooserGrid');
+
+  function levelIdxFor(sc) {
+    var idx = 0;
+    for (var i = 0; i < LEVELS.length; i++) if (sc >= LEVELS[i].min) idx = i;
+    return idx;
+  }
+
+  var friendEls = {}; // ci -> {btn, img} so hero friends react to good/bad points
+
+  function renderFriends() {
+    friendsRow.innerHTML = '';
+    friendEls = {};
+    friends.forEach(function (id) {
+      var ci = CHARACTERS.findIndex(function (c) { return c.id === id; });
+      if (ci < 0) return;
+      var btn = document.createElement('button');
+      btn.className = 'friend-btn';
+      btn.title = 'التحدث مع صديق نايف';
+      btn.setAttribute('aria-label', 'التحدث مع الصديق');
+      var img = document.createElement('img');
+      img.src = CHARACTERS[ci].img;
+      img.alt = '';
+      btn.appendChild(img);
+      // tapping a friend lets you chat with him
+      btn.addEventListener('click', function () { selectCharacter(ci); });
+      friendsRow.appendChild(btn);
+      friendEls[ci] = { btn: btn, img: img };
+      // hide his cheering card below
+      charCards[ci].card.style.display = 'none';
+      charCards[ci].card.classList.remove('selected');
+    });
+    // restore cards of non-friends
+    charCards.forEach(function (c, i) {
+      if (friends.indexOf(CHARACTERS[i].id) === -1) c.card.style.display = '';
+    });
+    // when every character became a friend, the cheering section is empty — hide it
+    var allCollected = friends.length >= CHARACTERS.length;
+    var charsTitle = $('charsTitle');
+    var charsSection = $('characters');
+    charsTitle.style.display = allCollected ? 'none' : '';
+    charsSection.style.display = allCollected ? 'none' : '';
+    $('friendsHint').style.display = friends.length ? 'block' : 'none';
+  }
+
+  function showFriendChooser() {
+    chooserGrid.innerHTML = '';
+    var remaining = CHARACTERS.filter(function (c) { return friends.indexOf(c.id) === -1; });
+    if (!remaining.length) return false;
+    remaining.forEach(function (c) {
+      var btn = document.createElement('button');
+      btn.className = 'chooser-char';
+      var img = document.createElement('img');
+      img.src = c.img;
+      img.alt = '';
+      var heart = document.createElement('div');
+      heart.className = 'pick-heart';
+      heart.textContent = '🤝';
+      btn.appendChild(img);
+      btn.appendChild(heart);
+      btn.addEventListener('click', function () { makeFriend(c.id); });
+      chooserGrid.appendChild(btn);
+    });
+    friendModal.classList.add('open');
+    return true;
+  }
+
+  function makeFriend(id) {
+    if (friends.indexOf(id) !== -1) return;
+    friends.push(id);
+    renderFriends();
+    save();
+    // more unclaimed level-ups? keep choosing friends
+    if (friends.length < Math.min(maxLevelIdx, CHARACTERS.length)) {
+      showFriendChooser();
+    } else {
+      friendModal.classList.remove('open');
+    }
+    ensureAudio().then(function () {
+      sfxMilestone();
+      burstConfetti(180);
+    });
+    showToast('🎉 صديق جديد انضم لنايف فوق!');
+    banner.className = 'banner good';
+    banner.textContent = 'يا سلام! صديق جديد مع نايف 🤝';
+    // clear chat selection if the chosen card vanished
+    if (selectedChar && selectedChar.id === id) {
+      selectedChar = null;
+      voicePanel.classList.remove('open');
+    }
+  }
+
+  /* ================= helpers ================= */
+
+  function pick(arr) { return arr[(Math.random() * arr.length) | 0]; }
+
+  function levelFor(sc) {
+    return LEVELS[levelIdxFor(sc)].name;
+  }
+
+  function flyChip(delta) {
+    var chip = document.createElement('span');
+    chip.className = 'fly-chip';
+    chip.textContent = (delta > 0 ? '+' : '−') + Math.abs(delta);
+    chip.style.color = delta > 0 ? 'var(--color-success-deep)' : 'var(--color-danger-deep)';
+    scoreNum.appendChild(chip);
+    setTimeout(function () { chip.remove(); }, 1000);
+  }
+
+  function render() {
+    scoreNum.textContent = score;
+    levelName.textContent = levelFor(score);
+    var stars = Math.floor(score / STAR_STEP);
+    for (var i = 0; i < starSpans.length; i++) {
+      if (i < stars) { starSpans[i].textContent = '⭐'; starSpans[i].classList.add('lit'); }
+      else { starSpans[i].textContent = '☆'; starSpans[i].classList.remove('lit'); }
+    }
+    var toNext = STAR_STEP - (score % STAR_STEP);
+    var toNextTxt = toNext === 1 ? 'نقطة واحدة' : toNext === 2 ? 'نقطتين' : toNext + ' نقاط';
+    progressText.textContent = score % STAR_STEP === 0 && score > 0
+      ? 'كملت المستوى! ⭐'
+      : 'باقي ' + toNextTxt + ' لنجمة جديدة';
+    progressFill.style.width = ((score % STAR_STEP) / STAR_STEP * 100) + '%';
+  }
+
+  var bubbleTimers = [];
+  function setCharactersMood(good, speakerText) {
+    charCards.forEach(function (c) {
+      c.img.src = good ? c.data.img : c.data.imgSad;
+      c.card.classList.remove('mad', 'glad');
+      c.card.classList.add(good ? 'glad' : 'mad');
+      // retrigger pop animation
+      c.card.classList.remove('react');
+      void c.card.offsetWidth;
+      c.card.classList.add('react');
+      // bubble
+      c.bubble.classList.remove('show');
+      if (c.bubbleTimer) clearTimeout(c.bubbleTimer);
+    });
+    // hero friends react too
+    Object.keys(friendEls).forEach(function (k) {
+      var ci = +k;
+      var fe = friendEls[ci];
+      fe.img.src = good ? CHARACTERS[ci].img : CHARACTERS[ci].imgSad;
+      fe.btn.classList.remove('mad', 'glad', 'react');
+      fe.btn.classList.add(good ? 'glad' : 'mad');
+      void fe.btn.offsetWidth;
+      fe.btn.classList.add('react');
+    });
+    bubbleTimers.forEach(clearTimeout);
+    bubbleTimers = [];
+    if (speakerText) {
+      // 1-2 random characters speak
+      var speakers = charCards.slice().sort(function () { return 0.5 - Math.random(); }).slice(0, 2);
+      speakers.forEach(function (sp, idx) {
+        bubbleTimers.push(setTimeout(function () {
+          sp.bubble.textContent = speakerText[idx % speakerText.length];
+          sp.bubble.classList.add('show');
+          bubbleTimers.push(setTimeout(function () { sp.bubble.classList.remove('show'); }, 3400));
+        }, idx * 500));
+      });
+    }
+  }
+
+  function flashScreen(good) {
+    var f = document.createElement('div');
+    f.className = good ? 'flash-good' : 'flash-bad';
+    document.body.appendChild(f);
+    setTimeout(function () { f.remove(); }, 750);
+  }
+
+  function showToast(text) {
+    toast.textContent = text;
+    toast.classList.add('show');
+    setTimeout(function () { toast.classList.remove('show'); }, 3200);
+  }
+
+  /* ================= actions ================= */
+
+  function award(delta) {
+    ensureAudio();
+    var prevScore = score;
+    history.push(prevScore);
+    var prevStars = Math.floor(score / STAR_STEP);
+    var prevLevel = levelFor(score);
+    score = Math.max(0, score + delta);
+    var gainedStars = Math.floor(score / STAR_STEP) - prevStars;
+    var newLevelIdx = levelIdxFor(score);
+    var newLevel = LEVELS[newLevelIdx].name;
+
+    render();
+    save();
+    flyChip(delta);
+
+    scoreNum.classList.remove('pop');
+    void scoreNum.offsetWidth;
+    scoreNum.classList.add('pop');
+
+    if (delta > 0) {
+      heroCard.classList.remove('bad');
+      heroCard.classList.add('good');
+      banner.className = 'banner good';
+      banner.textContent = 'يا سلام! ' + pick(PRAISE) + ' 🎉';
+      avatarImg.src = 'assets/nayef-happy.png';
+      scoreNum.classList.remove('bad-color');
+      setCharactersMood(true, PRAISE);
+      burstConfetti(90);
+      flashScreen(true);
+      sfxPlus();
+      if (newLevelIdx > maxLevelIdx) {
+        maxLevelIdx = newLevelIdx;
+        if (!showFriendChooser()) {
+          showToast('مبروووك! نايف صار: ' + newLevel + ' 🏅');
+          sfxMilestone();
+          burstConfetti(160);
+        } else {
+          showToast('ترقية! نايف صار: ' + newLevel + ' 🏅');
+        }
+      } else if (gainedStars > 0) {
+        showToast('نجمة جديدة لنايف! ⭐');
+        sfxMilestone();
+        burstConfetti(130);
+      }
+    } else {
+      heroCard.classList.remove('good');
+      heroCard.classList.add('bad');
+      banner.className = 'banner bad';
+      banner.textContent = pick(SCOLD);
+      avatarImg.src = 'assets/nayef-sad.png';
+      scoreNum.classList.add('bad-color');
+      setCharactersMood(false, SCOLD);
+      flashScreen(false);
+      sfxMinus();
+      // shake the hero card
+      heroCard.classList.remove('shake');
+      void heroCard.offsetWidth;
+      heroCard.classList.add('shake');
+    }
+  }
+
+  $('plusBtn').addEventListener('click', function () { award(1); });
+  $('minusBtn').addEventListener('click', function () { award(-1); });
+
+  /* undo — restores the previous score directly */
+  $('undoBtn').addEventListener('click', function () {
+    ensureAudio();
+    if (!history.length) {
+      banner.className = 'banner';
+      banner.textContent = 'ما فيه شي نتراجع عنه 😉';
+      return;
+    }
+    score = history.pop();
+    render();
+    save();
+    scoreNum.classList.remove('pop');
+    void scoreNum.offsetWidth;
+    scoreNum.classList.add('pop');
+    scoreNum.classList.remove('bad-color');
+    banner.className = 'banner';
+    banner.textContent = 'رجعنا خطوة للخلف ⏪';
+    if (soundOn && audioCtx) tone(440, 0, 0.12, 'triangle', 0.15);
+  });
+
+  /* sound toggle */
+  $('soundBtn').addEventListener('click', function () {
+    ensureAudio();
+    soundOn = !soundOn;
+    this.textContent = soundOn ? '🔊' : '🔇';
+    this.setAttribute('aria-label', soundOn ? 'إسكات الصوت' : 'تشغيل الصوت');
+  });
+
+  /* reset modal */
+  var resetModal = $('resetModal');
+  $('resetBtn').addEventListener('click', function () { resetModal.classList.add('open'); });
+  $('cancelReset').addEventListener('click', function () { resetModal.classList.remove('open'); });
+  resetModal.addEventListener('click', function (e) { if (e.target === resetModal) resetModal.classList.remove('open'); });
+  $('confirmReset').addEventListener('click', function () {
+    ensureAudio();
+    resetModal.classList.remove('open');
+    score = 0;
+    history = [];
+    friends = [];
+    maxLevelIdx = 0;
+    renderFriends();
+    render();
+    save();
+    heroCard.classList.remove('bad');
+    heroCard.classList.remove('good');
+    banner.className = 'banner';
+    banner.textContent = 'بداية جديدة! يا نايف وين البطل؟ 💪';
+    avatarImg.src = 'assets/nayef-happy.png';
+    scoreNum.classList.remove('bad-color');
+    setCharactersMood(true, null);
+    sfxPlus();
+  });
+
+  /* keyboard shortcuts */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '+' || e.key === '=') { e.preventDefault(); award(1); }
+    if (e.key === '-' || e.key === '_') { e.preventDefault(); award(-1); }
+  });
+
+  render();
+  renderFriends();
+  // resume unclaimed friend choices (e.g. old links with high score and no friends)
+  if (friends.length < Math.min(maxLevelIdx, CHARACTERS.length)) showFriendChooser();
+})();
+</script>
+<script data-pplx-inline-edit>
+(function () {
+  if (window === window.top) return;
+
+  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://perplexity.localhost","http://localhost:1420","http://127.0.0.1:1420","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
+  const MAX_FONT_BYTES = 500 * 1024;
+  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
+  const DEFAULT_LINE_HEIGHT = 16;
+  let scrollForwarding = false;
+  let scrollRaf = 0;
+  let trustedTopOrigin = null;
+
+  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
+  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
+  // across multiple labels.
+  function matchesAllowedOrigin(origin) {
+    if (!origin) return false;
+    for (const entry of allowedParentOrigins) {
+      if (!entry.includes("*")) {
+        if (entry === origin) return true;
+        continue;
+      }
+      const pattern = new RegExp(
+        "^" +
+          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
+          "$",
+      );
+      if (pattern.test(origin)) return true;
+    }
+    return false;
+  }
+
+  // Trust decision: when the sender is same-origin-visible (event.origin is a
+  // real origin like https://www.perplexity.ai) we trust event.origin directly.
+  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
+  // broker's stamped `parentOrigin` to identify the top window. The fallback
+  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
+  // on the response path (see postToTrustedTop) to ensure replies can't be
+  // delivered to anyone but the actual top window of that claimed origin.
+  function getTrustedParentOrigin(event) {
+    const forwardedParentOrigin =
+      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
+    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
+    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
+  }
+
+  // All responses go to window.top with targetOrigin = the allowlisted origin.
+  // An attacker that iframes us inside their own null-origin broker can claim
+  // any parentOrigin they like, but the browser will drop the reply whenever
+  // the real top's origin doesn't match — so the screenshot never leaves.
+  function postToTrustedTop(message) {
+    if (!trustedTopOrigin) return;
+    try {
+      window.top.postMessage(message, trustedTopOrigin);
+    } catch (_error) {}
+  }
+
+  const PICK_CAPABILITIES = ["pick"];
+  const PICK_CHAIN_LENGTH = 4;
+  const PICK_MAX_TEXT_CHARS = 120;
+  const PICK_MAX_HTML_CHARS = 300;
+
+  function truncate(value, maxChars) {
+    return value.length > maxChars ? value.slice(0, maxChars - 1) + "…" : value;
+  }
+
+  function isPickableElement(element) {
+    return (
+      element instanceof Element &&
+      element !== document.documentElement &&
+      element !== document.body
+    );
+  }
+
+  function resolvePickTarget(x, y) {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    const element = document.elementFromPoint(x, y);
+    return isPickableElement(element) ? element.closest("svg") || element : null;
+  }
+
+  function pickLabel(element) {
+    if (element.id) return element.localName + "#" + element.id;
+    return [element.localName].concat(Array.from(element.classList).slice(0, 2)).join(".");
+  }
+
+  // Only attributes that help find the element in source. data-* values and URL
+  // query strings or fragments can carry tokens.
+  const PICK_ATTRIBUTES = new Set([
+    "id",
+    "class",
+    "name",
+    "type",
+    "role",
+    "alt",
+    "aria-label",
+    "href",
+    "src",
+  ]);
+
+  function pickAttributeValue(attribute) {
+    return attribute.name === "href" || attribute.name === "src"
+      ? attribute.value.split(/[?#]/)[0]
+      : attribute.value;
+  }
+
+  function describePickElement(element) {
+    const chain = [];
+    for (
+      let current = element;
+      isPickableElement(current) && chain.length < PICK_CHAIN_LENGTH;
+      current = current.parentElement
+    ) {
+      chain.unshift(current);
+    }
+    const attributes = Array.from(element.attributes)
+      .filter((attribute) => PICK_ATTRIBUTES.has(attribute.name))
+      .map((attribute) => ` ${attribute.name}="${pickAttributeValue(attribute).replace(/"/g, "&quot;")}"`)
+      .join("");
+    const text = (element.innerText || element.textContent || "").replace(/\s+/g, " ").trim();
+    return {
+      chain: chain.map(pickLabel),
+      html: truncate(`<${element.localName}${attributes}>`, PICK_MAX_HTML_CHARS),
+      text: text ? truncate(text, PICK_MAX_TEXT_CHARS) : undefined,
+    };
+  }
+
+  // Hover asks once per frame, and innerText on a large section forces layout,
+  // so only the rect is re-read while the pointer stays on the same element.
+  // Clicks ask for fresh details since the page may have changed the element.
+  let lastPick = null;
+
+  function describePickTarget(element, fresh) {
+    if (fresh || lastPick?.element !== element) {
+      lastPick = { element, details: describePickElement(element) };
+    }
+    const rect = element.getBoundingClientRect();
+    return {
+      rect: { x: rect.left, y: rect.top, width: rect.width, height: rect.height },
+      ...lastPick.details,
+    };
+  }
+
+  function inlineAll(original, clone) {
+    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
+
+    try {
+      const computedStyle = getComputedStyle(original);
+      // cssText on a computed style is the serialized declaration in modern
+      // Chromium/Safari — a single read beats enumerating ~400 longhand
+      // properties. Firefox returns "" here, so we fall back on empty.
+      const serialized = computedStyle.cssText;
+      if (serialized) {
+        clone.style.cssText = serialized;
+      } else {
+        const parts = new Array(computedStyle.length);
+        for (let index = 0; index < computedStyle.length; index += 1) {
+          const property = computedStyle[index];
+          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
+        }
+        clone.style.cssText = parts.join("");
+      }
+    } catch (_error) {}
+
+    const originalChildren = original.children;
+    const clonedChildren = clone.children;
+    for (
+      let index = 0;
+      index < originalChildren.length && index < clonedChildren.length;
+      index += 1
+    ) {
+      inlineAll(originalChildren[index], clonedChildren[index]);
+    }
+  }
+
+  function extractFontUrl(srcValue) {
+    const matches = [
+      ...srcValue.matchAll(
+        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
+      ),
+    ];
+    if (matches.length === 0) return null;
+    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
+    if (woff2) return woff2[1];
+    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
+    if (woff) return woff[1];
+    return matches[0][1];
+  }
+
+  // Cache resolved font URL -> data URI across captures. Fonts on a page
+  // essentially never change, and a batch run emits multiple captures back to
+  // back — without this we'd refetch + re-base64 every time.
+  const fontDataUriCache = new Map();
+  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
+
+  async function fetchAsDataUri(url) {
+    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
+    let dataUri = null;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size <= MAX_FONT_BYTES) {
+          dataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch (_error) {
+      dataUri = null;
+    }
+    fontDataUriCache.set(url, dataUri);
+    return dataUri;
+  }
+
+  function collectFontFaceRuleTexts() {
+    const rules = [];
+    for (const sheet of document.styleSheets) {
+      let cssRules;
+      try {
+        cssRules = sheet.cssRules;
+      } catch (_error) {
+        continue;
+      }
+      if (!cssRules) continue;
+      for (const rule of cssRules) {
+        const cssText = rule.cssText || "";
+        if (cssText.startsWith("@font-face")) rules.push(cssText);
+      }
+    }
+    return rules;
+  }
+
+  async function buildInlinedFontCss() {
+    const ruleTexts = collectFontFaceRuleTexts();
+    if (ruleTexts.length === 0) return null;
+
+    const resolved = ruleTexts.map((cssText) => {
+      if (!SRC_DECLARATION_RE.test(cssText)) return null;
+      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
+      if (!srcMatch) return null;
+      const url = extractFontUrl(srcMatch[1]);
+      if (!url) return null;
+      try {
+        return { cssText, url: new URL(url, document.baseURI).href };
+      } catch (_error) {
+        return null;
+      }
+    });
+
+    const dataUris = await Promise.all(
+      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
+    );
+
+    const inlined = [];
+    let totalBytes = 0;
+    for (let index = 0; index < resolved.length; index += 1) {
+      const entry = resolved[index];
+      const dataUri = dataUris[index];
+      if (!entry || !dataUri) continue;
+      const approxBytes = dataUri.length * 0.75;
+      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
+      totalBytes += approxBytes;
+      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
+    }
+    return inlined.length > 0 ? inlined.join("\n") : null;
+  }
+
+  function stripExternal(clone) {
+    const images = clone.querySelectorAll("img");
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index].getAttribute("src");
+      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
+    }
+
+    const elements = clone.querySelectorAll("*");
+    for (let index = 0; index < elements.length; index += 1) {
+      const style = elements[index].style.cssText;
+      if (style && style.includes("url(")) {
+        elements[index].style.cssText = style.replace(
+          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
+          "none",
+        );
+      }
+    }
+  }
+
+  function emitScroll() {
+    scrollRaf = 0;
+    if (!scrollForwarding) return;
+    postToTrustedTop({
+      type: "INLINE_EDIT_SCROLL",
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+      capabilities: PICK_CAPABILITIES,
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!scrollForwarding || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(emitScroll);
+    },
+    { passive: true, capture: true },
+  );
+
+  async function handleCaptureRequest(event) {
+    const requestId = event.data.requestId;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    function postResult(dataUrl) {
+      postToTrustedTop({
+        type: "INLINE_EDIT_SCREENSHOT_RESULT",
+        requestId,
+        dataUrl,
+        scrollX,
+        scrollY,
+      });
+    }
+
+    try {
+      // Wait for any pending web fonts to resolve so both inline metrics and
+      // the @font-face inlining below see the same loaded faces.
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_error) {}
+      }
+
+      const clone = document.documentElement.cloneNode(true);
+      inlineAll(document.documentElement, clone);
+
+      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
+      for (let index = 0; index < removedNodes.length; index += 1) {
+        removedNodes[index].remove();
+      }
+
+      stripExternal(clone);
+
+      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
+      // can resolve them — external font URLs aren't fetched during
+      // foreignObject rendering, which would otherwise force a fallback face
+      // and change text metrics.
+      const inlinedFontCss = await buildInlinedFontCss();
+      if (inlinedFontCss) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = inlinedFontCss;
+        const head = clone.querySelector("head");
+        if (head) head.appendChild(styleEl);
+        else clone.insertBefore(styleEl, clone.firstChild);
+      }
+
+      const html = new XMLSerializer().serializeToString(clone);
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        '<foreignObject width="100%" height="100%">' +
+        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
+        `<div style="position:relative;left:-${scrollX}px;top:-${scrollY}px">` +
+        html +
+        "</div></div></foreignObject></svg>";
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0);
+        postResult(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () {
+        postResult(null);
+      };
+      image.src = svgUrl;
+    } catch (_error) {
+      postResult(null);
+    }
+  }
+
+  window.addEventListener("message", function (event) {
+    if (!event.data) return;
+    // Only accept messages from the direct parent frame. Blocks sibling /
+    // unrelated-window postMessage senders that could otherwise reach us.
+    if (event.source !== window.parent) return;
+
+    const trustedParentOrigin = getTrustedParentOrigin(event);
+    if (!trustedParentOrigin) return;
+    trustedTopOrigin = trustedParentOrigin;
+
+    if (event.data.type === "INLINE_EDIT_PICK") {
+      const element = resolvePickTarget(event.data.x, event.data.y);
+      postToTrustedTop({
+        type: "INLINE_EDIT_PICK_RESULT",
+        seq: event.data.seq,
+        target: element ? describePickTarget(element, event.data.fresh === true) : null,
+      });
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
+      scrollForwarding = true;
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
+      scrollForwarding = false;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_BY") {
+      const { deltaX, deltaY, deltaMode } = event.data;
+      if (!scrollForwarding || !Number.isFinite(deltaX) || !Number.isFinite(deltaY)) return;
+      if (deltaMode !== 0 && deltaMode !== 1 && deltaMode !== 2) return;
+      const lineHeight =
+        parseFloat(getComputedStyle(document.documentElement).lineHeight) || DEFAULT_LINE_HEIGHT;
+      const scaleX = deltaMode === 1 ? lineHeight : deltaMode === 2 ? window.innerWidth : 1;
+      const scaleY = deltaMode === 1 ? lineHeight : deltaMode === 2 ? window.innerHeight : 1;
+      // The selection overlay receives the wheel event instead of this iframe.
+      // Instant scrolling preserves trackpad deltas even on smooth-scroll sites.
+      window.scrollBy({ left: deltaX * scaleX, top: deltaY * scaleY, behavior: "instant" });
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
+
+    handleCaptureRequest(event);
+  });
+})();
+
+
+</script></body>
+</html>
